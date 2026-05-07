@@ -11,9 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('families', function (Blueprint $table) {
+        //
+
+        Schema::create('feature_table', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+
+            $table->foreignId('option_id')->constrained()->onDelete('cascade'); // Relación con la tabla options
+            $table->foreignId('variant_id')->constrained()->onDelete('cascade'); // Relación con la tabla variants
+
             $table->timestamps();
         });
     }
@@ -23,6 +28,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('families');
+        //
+        Schema::dropIfExists('feature_table');
+
     }
 };
