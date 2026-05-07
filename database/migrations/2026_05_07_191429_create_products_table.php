@@ -11,9 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('families', function (Blueprint $table) {
+        Schema::create('products', function (Blueprint $table) {
             $table->id();
+            $table->string('sku')->unique();
             $table->string('name');
+            $table->text('description');
+            $table->string('image_path');
+            $table->float('price');
+
+            $table->foreignId('sub_category_id')->constrained(); // Relación con la tabla sub_categories
+
             $table->timestamps();
         });
     }
@@ -23,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('families');
+        Schema::dropIfExists('products');
     }
 };
