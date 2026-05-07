@@ -37,8 +37,15 @@ class FamilyController extends Controller
         ]);
 
         Family::create($request->all());
+
+        session()->flash('swal', [
+            'icon' => 'success',
+            'title' => '¡Éxito!',
+            'text' => 'Familia creada exitosamente.'
+        ]);
+
         return redirect()->route('admin.families.index')
-            ->with('success', 'Familia creada exitosamente.');
+            ;
 
     }
 
@@ -70,8 +77,12 @@ class FamilyController extends Controller
         ]);
 
         $family->update($request->all());
-        return redirect()->route('admin.families.index')
-            ->with('success', 'Familia actualizada exitosamente.');
+        session()->flash('swal', [
+            'icon' => 'success',
+            'title' => '¡Éxito!',
+            'text' => 'Familia editada exitosamente.'
+        ]);
+        return redirect()->route('admin.families.index');
     }
 
     /**
@@ -79,9 +90,22 @@ class FamilyController extends Controller
      */
     public function destroy(Family $family)
     {
+
+        if($family->categories()->count() > 0) {
+            session()->flash('swal', [
+                'icon' => 'error',
+                'title' => '¡Error!',
+                'text' => 'No se puede eliminar la familia porque tiene productos asociados.'
+            ]);
+            return redirect()->route('admin.families.index');
+        }
         //
         $family->delete($family);
-        return redirect()->route('admin.families.index')
-            ->with('success', 'Familia eliminada exitosamente.');
+        session()->flash('swal', [
+            'icon' => 'success',
+            'title' => '¡Éxito!',
+            'text' => 'Familia eliminada exitosamente.'
+        ]);
+        return redirect()->route('admin.families.index');
     }
 }

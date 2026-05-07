@@ -66,8 +66,15 @@
             </div>
         </div>
     </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @livewireScripts
+    <!-- SweetAlert2 Script -->
+    @if (session('swal'))
+        <script>
+            Swal.fire({!! json_encode(session('swal')) !!});
+        </script>
+    @endif
+
 </body>
 
 </html>

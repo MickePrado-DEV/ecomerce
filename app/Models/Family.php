@@ -15,6 +15,12 @@ class Family extends Model
     ];
 
     // relación uno a muchos
+    public function categories()
+    {
+        return $this->hasMany(Category::class);
+    }
+
+    // relación uno a muchos
     public function products()
     {
         return $this->hasMany(Product::class);
