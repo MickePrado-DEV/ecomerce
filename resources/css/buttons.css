@@ -1,0 +1,15 @@
+.btn-add-action {
+    display: inline-flex; /* inline-flex */
+    align-items: center; /* items-center */
+    padding: 0.5rem 1rem; /* px-4 py-2 → 16px horizontal, 8px vertical */
+    background-color: #2563eb; /* bg-blue-600 */
+    color: #ffffff; /* text-white */
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 500; /* font-medium */
+    border-radius: 0.25rem; /* rounded */
+    transition: background-color 0.2s; /* hover transition */
+}
+
+.btn-blue:hover {
+    background-color: #3b82f6; /* hover:bg-blue-500 */
+}

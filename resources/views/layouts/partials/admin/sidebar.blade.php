@@ -6,12 +6,13 @@
             'route' => route('admin.dashboard'),
             'active' => request()->routeIs('admin.dashboard'),
         ],
-        //[
-        //     'icon' => 'fa-solid fa-shopping-cart',
-        //     'name' => 'Orders',
-        //     'route' => 'admin.orders',
-        //     'active' => request()->routeIs('admin.orders'),
-        // ],
+        [
+            //FAMILIAS DE PRODUCTOS
+            'icon' => 'fa-solid fa-box-open',
+            'name' => 'Familias',
+            'route' => route('admin.families.index'),
+            'active' => request()->routeIs('admin.families.*'),
+        ],
         // [
         //     'icon' => 'fa-solid fa-boxes',
         //     'name' => 'Products',
