@@ -4,13 +4,13 @@
         'route' => route('admin.dashboard'),
     ],
     [
-        'name' => 'Familias',
+        'name' => 'Categorías',
     ],
 ]">
 
     <x-slot name="action">
-        <a href="{{ route('admin.families.create') }}" class="btn btn-add-action  ">
-            <i class="fa-solid fa-plus mr-2"></i> Crear Familia
+        <a href="{{ route('admin.categories.create') }}" class="btn btn-add-action  ">
+            <i class="fa-solid fa-plus mr-2"></i> Crear Categoría
         </a>
     </x-slot>
 
@@ -20,30 +20,36 @@
                 <tr>
                     <th scope="col" class="px-6 py-3 font-medium">ID</th>
                     <th scope="col" class="px-6 py-3 font-medium">Nombre</th>
+                    <th scope="col" class="px-6 py-3 font-medium">Familia</th>
+
                     <th scope="col" class="px-6 py-3 font-medium">Acciones</th>
                 </tr>
             </thead>
             <tbody>
-                @forelse ($families as $family)
+                @forelse ($categories as $category)
                     <tr class="bg-gray-900 border-b border-gray-700 hover:bg-gray-800">
                         <th scope="row" class="px-6 py-4 font-medium text-white whitespace-nowrap">
-                            {{ $family->id }}
+                            {{ $category->id }}
                         </th>
                         <td class="px-6 py-4 text-gray-300">
-                            {{ $family->name }}
+                            {{ $category->name }}
                         </td>
                         <td class="px-6 py-4">
-                            <a href="{{ route('admin.families.edit', $family) }}"
+                            {{ $category->family->name ?? 'Sin familia' }}
+                        </td>
+                        <td class="px-6 py-4">
+                            <a href="{{ route('admin.categories.edit', $category) }}"
                                 class="text-blue-400 hover:text-blue-300 mr-2">
                                 <i class="fa-solid fa-pen"></i>
                             </a>
                             <button type="button" class="text-red-400 hover:text-red-300"
-                                onclick="confirmDelete({{ $family->id }})">
+                                onclick="confirmDelete({{ $category->id }})">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
 
-                            <form id="delete-form-{{ $family->id }}"
-                                action="{{ route('admin.families.destroy', $family) }}" method="POST" class="hidden">
+                            <form id="delete-form-{{ $category->id }}"
+                                action="{{ route('admin.categories.destroy', $category) }}" method="POST"
+                                class="hidden">
                                 @csrf
                                 @method('DELETE')
                             </form>
@@ -54,11 +60,11 @@
                         <td colspan="3" class="px-6 py-8 text-center">
                             <div class="flex flex-col items-center justify-center text-gray-400">
                                 <i class="fa-solid fa-box-open text-4xl mb-2 text-gray-500"></i>
-                                <span class="text-lg font-semibold">No hay familias registradas</span>
-                                <span class="text-sm text-gray-500">Agrega una nueva familia para comenzar</span>
-                                <a href="{{ route('admin.families.create') }}"
+                                <span class="text-lg font-semibold">No hay categorías registradas</span>
+                                <span class="text-sm text-gray-500">Agrega una nueva categoría para comenzar</span>
+                                <a href="{{ route('admin.categories.create') }}"
                                     class="mt-3 inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-500">
-                                    <i class="fa-solid fa-plus mr-2"></i> Crear Familia
+                                    <i class="fa-solid fa-plus mr-2"></i> Crear Categoría
                                 </a>
                             </div>
                         </td>
@@ -69,7 +75,7 @@
     </div>
 
     <div class="mt-4">
-        {{ $families->links() }}
+        {{ $categories->links() }}
     </div>
 
 

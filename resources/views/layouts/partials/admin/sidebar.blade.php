@@ -13,12 +13,12 @@
             'route' => route('admin.families.index'),
             'active' => request()->routeIs('admin.families.*'),
         ],
-        // [
-        //     'icon' => 'fa-solid fa-boxes',
-        //     'name' => 'Products',
-        //     'route' => 'admin.products',
-        //     'active' => request()->routeIs('admin.products'),
-        // ],
+        [
+            'icon' => 'fa-solid fa-tags',
+            'name' => 'Categorías',
+            'route' => route('admin.categories.index'),
+            'active' => request()->routeIs('admin.categories.*'),
+        ],
         // [
         //     'icon' => 'fa-solid fa-users',
         //     'name' => 'Customers',
