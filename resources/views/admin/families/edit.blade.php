@@ -14,9 +14,7 @@
 
 
     <form action="{{ route('admin.families.update', $family) }}" method="POST">
-
         @method('PUT')
-
-        @include('admin.families._form')
+        @include('admin.families.form._form')
     </form>
 </x-admin-layout>

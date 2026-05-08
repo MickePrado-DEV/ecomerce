@@ -15,7 +15,7 @@
     <div class="card">
         <form action="{{ route('admin.categories.update', $category->id) }}" method="POST">
             @method('PUT')
-            @include('admin.categories._form')
+            @include('admin.categories.form._form')
 
         </form>
     </div>

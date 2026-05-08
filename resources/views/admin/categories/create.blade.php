@@ -12,6 +12,6 @@
     ],
 ]">
     <form action="{{ route('admin.categories.store') }}" method="POST">
-        @include('admin.categories._form')
+        @include('admin.categories.form._form')
     </form>
 </x-admin-layout>
