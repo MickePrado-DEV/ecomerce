@@ -3,18 +3,22 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Family;
 use Illuminate\Http\Request;
 
-class FamilyController extends Controller
+class CategoryController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $families = Family::orderBy('id', 'desc')->paginate(10);
-        return view('admin.families.index', compact('families'));
+        //
+        $categories = Category::orderBy('id', 'desc')
+        ->with('family')
+        ->paginate(10);
+        return view('admin.categories.index',compact('categories'));
     }
 
     /**
@@ -23,7 +27,8 @@ class FamilyController extends Controller
     public function create()
     {
         //
-        return view('admin.families.create');
+        $families = Family::all();
+        return view('admin.categories.create', compact('families'));
     }
 
     /**
@@ -33,26 +38,24 @@ class FamilyController extends Controller
     {
         //
         $request->validate([
+            'family_id' => 'required|exists:families,id',
             'name' => 'required|string|max:255',
+
         ]);
 
-        Family::create($request->all());
-
+        Category::create($request->all());
         session()->flash('swal', [
             'icon' => 'success',
             'title' => '¡Éxito!',
-            'text' => 'Familia creada exitosamente.'
+            'text' => 'Categoría creada exitosamente.'
         ]);
-
-        return redirect()->route('admin.families.index')
-            ;
-
+        return redirect()->route('admin.categories.index');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Family $family)
+    public function show(Category $category)
     {
         //
     }
@@ -60,52 +63,51 @@ class FamilyController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Family $family)
+    public function edit(Category $category)
     {
         //
-        return view('admin.families.edit', compact('family'));
+        $families = Family::all();
+        return view('admin.categories.edit', compact('category', 'families'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Family $family)
+    public function update(Request $request, Category $category)
     {
         //
         $request->validate([
             'name' => 'required|string|max:255',
         ]);
 
-        $family->update($request->all());
+        $category->update($request->all());
         session()->flash('swal', [
             'icon' => 'success',
             'title' => '¡Éxito!',
-            'text' => 'Familia editada exitosamente.'
+            'text' => 'Categoría actualizada exitosamente.'
         ]);
-        return redirect()->route('admin.families.index');
+        return redirect()->route('admin.categories.index');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Family $family)
+    public function destroy(Category $category)
     {
-
-        if($family->categories()->count() > 0) {
+       if($category->subCategories()->count() > 0){
             session()->flash('swal', [
                 'icon' => 'error',
                 'title' => '¡Error!',
-                'text' => 'No se puede eliminar la familia porque tiene productos asociados.'
+                'text' => 'No se puede eliminar la categoría porque tiene sub Categorías asociadas.'
             ]);
-            return redirect()->route('admin.families.index');
-        }
-        //
-        $family->delete($family);
+            return redirect()->route('admin.categories.index');
+       }
+        $category->delete($category);
         session()->flash('swal', [
             'icon' => 'success',
             'title' => '¡Éxito!',
-            'text' => 'Familia eliminada exitosamente.'
+            'text' => 'Categoría eliminada exitosamente.'
         ]);
-        return redirect()->route('admin.families.index');
+        return redirect()->route('admin.categories.index');
     }
 }
