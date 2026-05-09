@@ -14,23 +14,23 @@
             'active' => request()->routeIs('admin.families.*'),
         ],
         [
-            'icon' => 'fa-solid fa-tags',
+            'icon' => 'fa-solid fa-tag',
             'name' => 'Categorías',
             'route' => route('admin.categories.index'),
             'active' => request()->routeIs('admin.categories.*'),
         ],
-        // [
-        //     'icon' => 'fa-solid fa-users',
-        //     'name' => 'Customers',
-        //     'route' => 'admin.customers',
-        //     'active' => request()->routeIs('admin.customers'),
-        // ],
-        // [
-        //     'icon' => 'fa-solid fa-chart-bar',
-        //     'name' => 'Reports',
-        //     'route' => 'admin.reports',
-        //     'active' => request()->routeIs('admin.reports'),
-        // ],
+        [
+            'icon' => 'fa-solid fa-tags',
+            'name' => 'Sub Categorías',
+            'route' => route('admin.subCategories.index'),
+            'active' => request()->routeIs('admin.subCategories.*'),
+        ],
+        [
+            'icon' => 'fa-solid fa-box',
+            'name' => 'Productos',
+            'route' => route('admin.products.index'),
+            'active' => request()->routeIs('admin.products.*'),
+        ],
         // [
         //     'icon' => 'fa-solid fa-plug',
         //     'name' => 'Integrations',
