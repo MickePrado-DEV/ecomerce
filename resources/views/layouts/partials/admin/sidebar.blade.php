@@ -25,12 +25,12 @@
             'route' => route('admin.subCategories.index'),
             'active' => request()->routeIs('admin.subCategories.*'),
         ],
-        // [
-        //     'icon' => 'fa-solid fa-chart-bar',
-        //     'name' => 'Reports',
-        //     'route' => 'admin.reports',
-        //     'active' => request()->routeIs('admin.reports'),
-        // ],
+        [
+            'icon' => 'fa-solid fa-box',
+            'name' => 'Productos',
+            'route' => route('admin.products.index'),
+            'active' => request()->routeIs('admin.products.*'),
+        ],
         // [
         //     'icon' => 'fa-solid fa-plug',
         //     'name' => 'Integrations',

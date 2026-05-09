@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\FamilyController;
+use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\admin\SubCategoryController;
 use Illuminate\Support\Facades\Route;
 
@@ -17,4 +18,7 @@ Route::resource(
 );
 Route::resource(
     'subCategories', SubCategoryController::class,
+);
+Route::resource(
+    'products', ProductController::class,
 );
