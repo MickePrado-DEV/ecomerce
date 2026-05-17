@@ -12,10 +12,12 @@
 
         {{-- AREA CON SCROLL: Lista de opciones --}}
         <div class="p-6 overflow-y-auto custom-scrollbar">
+
             <div class="space-y-8">
                 @foreach ($options as $option)
                     <div class="relative border rounded-lg border-gray-600 p-6 pt-8 bg-[#242b3d]"
                         wire:key="option-{{ $option->id }}">
+
                         <div class="absolute -top-3 left-4 px-2 bg-[#1f2937]">
                             <span
                                 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">{{ $option->name }}</span>

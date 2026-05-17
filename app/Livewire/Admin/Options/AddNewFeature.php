@@ -22,8 +22,6 @@ class AddNewFeature extends Component
             'newFeature.description' => 'required'
         ]);
 
-        dd($this->newFeature);
-
         $this->option->features()->create($this->newFeature);
 
         $this->reset('newFeature');
