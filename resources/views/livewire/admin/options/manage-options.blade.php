@@ -26,13 +26,14 @@
                                 class="text-gray-400 hover:text-blue-400">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
-                            <button wire:click="deleteOption({{ $option->id }})" wire:confirm="¿Eliminar?"
-                                class="text-gray-400 hover:text-red-500">
+                            <button type="button" wire:click="deleteOption({{ $option->id }})"
+                                wire:confirm="¿Eliminar la opción «{{ $option->name }}» y todos sus valores?"
+                                wire:loading.attr="disabled" class="text-gray-400 hover:text-red-500">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
                         </div>
 
-                        <div class="flex flex-wrap gap-4 mt-2">
+                        <div class="flex flex-wrap gap-4 mt-2 mb-4">
                             @foreach ($option->features as $feature)
                                 @if ($option->type == 1)
                                     <span
@@ -49,6 +50,10 @@
                                     </div>
                                 @endif
                             @endforeach
+                        </div>
+
+                        <div>
+                            @livewire('admin.options.add-new-feature', ['option' => $option], key('add-new-feature-' . $option->id))
                         </div>
                     </div>
                 @endforeach
@@ -97,9 +102,9 @@
                             wire:key="feature-form-{{ $index }}">
 
                             <div class="absolute -top-3 left-4 px-2 bg-[#1f2937]">
-                                {{-- Agregado type="button" para evitar recargas --}}
-                                <button type="button" wire:click="newOption.removeFeature({{ $index }})"
-                                    class="text-red-500 hover:text-red-400">
+                                <button type="button" wire:click="removeFeature({{ $index }})"
+                                    @disabled(count($newOption->features) <= 1)
+                                    class="text-red-500 hover:text-red-400 disabled:opacity-40 disabled:cursor-not-allowed">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </div>
@@ -134,7 +139,7 @@
 
                 {{-- Botón de añadir fuera del loop de features pero dentro del scroll --}}
                 <div class="mt-6 flex justify-center pb-4">
-                    <button type="button" wire:click="newOption.addFeature"
+                    <button type="button" wire:click="addFeature"
                         class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out shadow-sm flex items-center gap-2">
                         <i class="fa-solid fa-plus-circle"></i>
                         AÑADIR OTRO VALOR
