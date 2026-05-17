@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin\Options;
 
 use App\Livewire\Forms\Admin\options\NewOptionForm;
+use App\Models\Feature;
 use App\Models\Option;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\On;
@@ -20,7 +21,7 @@ class ManageOptions extends Component
     {
         $this->loadOptions();
     }
-    #[On('addFeature')]
+    #[On('featureAdded')]
     public function loadOptions(): void
     {
         $this->options = Option::with('features')->get();
@@ -47,10 +48,34 @@ class ManageOptions extends Component
         $this->newOption->addFeature();
     }
 
+
     public function removeFeature(int $index): void
     {
         $this->newOption->removeFeature($index);
     }
+    public function deleteFeature(Feature $feature): void
+    {
+        if ($feature->option->features()->count() <= 1) {
+            $this->dispatch('swal', [
+                'icon' => 'error',
+                'title' => '¡Error!',
+                'text' => 'Una opción debe tener al menos un valor.',
+            ]);
+            return;
+        }
+
+        $feature->delete();
+        $this->loadOptions();
+
+        $this->dispatch('swal', [
+            'icon' => 'success',
+            'title' => '¡Eliminado!',
+            'text' => 'El valor se eliminó correctamente.',
+        ]);
+    }
+
+
+
 
     public function save(): void
     {

@@ -28,31 +28,61 @@
                                 class="text-gray-400 hover:text-blue-400">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
-                            <button type="button" wire:click="deleteOption({{ $option->id }})"
-                                wire:confirm="¿Eliminar la opción «{{ $option->name }}» y todos sus valores?"
-                                wire:loading.attr="disabled" class="text-gray-400 hover:text-red-500">
+
+                            {{-- Botón Eliminar Opción Principal --}}
+                            <button type="button"
+                                onclick="window.triggerDeleteOption({{ $option->id }}, '{{ $option->name }}')"
+                                class="text-gray-400 hover:text-red-500">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
                         </div>
 
-                        <div class="flex flex-wrap gap-4 mt-2 mb-4">
+
+                        <div class="flex flex-wrap gap-3 mt-3 mb-5">
                             @foreach ($option->features as $feature)
                                 @if ($option->type == 1)
                                     <span
-                                        class="bg-gray-700 text-gray-200 text-xs font-semibold px-3 py-1 rounded-full border border-gray-500">
-                                        {{ $feature->description }}
+                                        class="group inline-flex items-center gap-1.5 bg-gray-800 text-gray-200 text-xs font-medium px-3 py-1 rounded-full border border-gray-600 hover:bg-gray-700 transition-colors">
+
+                                        <span class="truncate">
+                                            {{ $feature->description }}
+                                        </span>
+
+                                        {{-- Botón Eliminar Feature Tipo 1 --}}
+                                        <button type="button"
+                                            onclick="window.triggerDeleteFeature({{ $feature->id }}, {{ $option->features->count() }})"
+                                            class="opacity-60 group-hover:opacity-100 transition-opacity focus:outline-none"
+                                            title="Eliminar">
+                                            <i class="fa-solid fa-xmark text-[10px] hover:text-red-400"></i>
+                                        </button>
                                     </span>
                                 @else
                                     <div
-                                        class="flex items-center gap-2 bg-gray-700 px-2 py-1 rounded-full border border-gray-500">
-                                        <span class="h-4 w-4 rounded-full border border-gray-800 shadow-sm"
-                                            style="background-color: {{ $feature->value }}"></span>
-                                        <span
-                                            class="text-[10px] text-gray-300 font-mono">{{ $feature->description ?: $feature->value }}</span>
+                                        class="group inline-flex items-center gap-2 bg-gray-800 px-2.5 py-1 rounded-full border border-gray-600 hover:bg-gray-700 transition-colors">
+
+                                        <span class="h-4 w-4 rounded-full border border-gray-900 shadow-inner"
+                                            style="background-color: {{ $feature->value }}">
+                                        </span>
+
+                                        <span class="text-xs text-gray-300 font-medium truncate max-w-[100px]">
+                                            {{ $feature->description ?: $feature->value }}
+                                        </span>
+
+                                        {{-- Botón Eliminar Feature Tipo 2 --}}
+                                        <button type="button"
+                                            onclick="window.triggerDeleteFeature({{ $feature->id }}, {{ $option->features->count() }})"
+                                            class="ml-1 inline-flex items-center justify-center h-5 w-5 rounded-full
+                               text-gray-300/70 hover:text-red-400 hover:bg-red-500/10
+                               opacity-60 group-hover:opacity-100 transition
+                               focus:outline-none focus:ring-2 focus:ring-red-500/40"
+                                            title="Eliminar">
+                                            <i class="fa-solid fa-xmark text-[10px]"></i>
+                                        </button>
                                     </div>
                                 @endif
                             @endforeach
                         </div>
+
 
                         <div>
                             @livewire('admin.options.add-new-feature', ['option' => $option], key('add-new-feature-' . $option->id))
@@ -156,4 +186,66 @@
                 class="bg-blue-600 text-white hover:bg-blue-700">{{ $newOption->id ? 'GUARDAR CAMBIOS' : 'CREAR OPCIÓN' }}</x-button>
         </x-slot>
     </x-dialog-modal>
+
+    @push('js')
+        <script>
+            // Configuración estética oscura para SweetAlert2
+            const swalConfig = {
+                background: '#1f2937',
+                color: '#fff',
+                confirmButtonColor: '#3b82f6',
+                cancelButtonColor: '#ef4444',
+                customClass: {
+                    popup: 'border border-gray-700 rounded-lg shadow-xl'
+                }
+            };
+
+            // Declaración global en el objeto window para evitar fallas de alcance (scope)
+            window.triggerDeleteOption = function(id, name) {
+                Swal.fire({
+                    ...swalConfig,
+                    title: '¿Eliminar la opción?',
+                    text: `Se borrará «${name}» junto con todos sus valores relacionados de forma permanente.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Comunicación directa con el componente Livewire
+                        @this.call('deleteOption', id);
+                    }
+                });
+            }
+
+            window.triggerDeleteFeature = function(featureId, totalFeatures) {
+                // Validación para evitar que eliminen el único valor restante de una opción
+                if (totalFeatures <= 1) {
+                    Swal.fire({
+                        ...swalConfig,
+                        title: 'Acción inválida',
+                        text: 'No puedes eliminar este valor porque la opción debe tener al menos un valor registrado.',
+                        icon: 'error',
+                        confirmButtonText: 'Entendido'
+                    });
+                    return;
+                }
+
+                Swal.fire({
+                    ...swalConfig,
+                    title: '¿Eliminar este valor?',
+                    text: "Esta acción no se puede deshacer.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, eliminar valor',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Comunicación directa con el componente Livewire
+                        @this.call('deleteFeature', featureId);
+                    }
+                });
+            }
+        </script>
+    @endpush
 </div>

@@ -26,7 +26,7 @@ class AddNewFeature extends Component
 
         $this->reset('newFeature');
 
-        $this->emit('featureAdded');
+        $this->dispatch('featureAdded');
     }
     public function render()
     {
