@@ -31,7 +31,7 @@
 
                             {{-- Botón Eliminar Opción Principal --}}
                             <button type="button"
-                                onclick="window.triggerDeleteOption({{ $option->id }}, '{{ $option->name }}')"
+                                onclick="window.triggerDeleteOption({{ $option->id }}, @js($option->name))"
                                 class="text-gray-400 hover:text-red-500">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
@@ -189,7 +189,6 @@
 
     @push('js')
         <script>
-            // Configuración estética oscura para SweetAlert2
             const swalConfig = {
                 background: '#1f2937',
                 color: '#fff',
@@ -200,7 +199,6 @@
                 }
             };
 
-            // Declaración global en el objeto window para evitar fallas de alcance (scope)
             window.triggerDeleteOption = function(id, name) {
                 Swal.fire({
                     ...swalConfig,
@@ -212,14 +210,12 @@
                     cancelButtonText: 'Cancelar'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // Comunicación directa con el componente Livewire
                         @this.call('deleteOption', id);
                     }
                 });
-            }
+            };
 
             window.triggerDeleteFeature = function(featureId, totalFeatures) {
-                // Validación para evitar que eliminen el único valor restante de una opción
                 if (totalFeatures <= 1) {
                     Swal.fire({
                         ...swalConfig,
@@ -234,18 +230,17 @@
                 Swal.fire({
                     ...swalConfig,
                     title: '¿Eliminar este valor?',
-                    text: "Esta acción no se puede deshacer.",
+                    text: 'Esta acción no se puede deshacer.',
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonText: 'Sí, eliminar valor',
                     cancelButtonText: 'Cancelar'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // Comunicación directa con el componente Livewire
                         @this.call('deleteFeature', featureId);
                     }
                 });
-            }
+            };
         </script>
     @endpush
 </div>
