@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('option_id')->constrained()->onDelete('cascade'); // Relación con la tabla options
             $table->foreignId('product_id')->constrained()->onDelete('cascade'); // Relación con la tabla products
 
-            $table->string('value'); // Valor específico para esta opción en este producto
+            $table->json('features'); // Valor específico para esta opción en este producto
             $table->timestamps();
         });
     }
@@ -30,6 +30,5 @@ return new class extends Migration
     {
         //
         Schema::dropIfExists('option_product');
-
     }
 };
