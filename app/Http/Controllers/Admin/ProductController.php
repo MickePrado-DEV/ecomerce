@@ -82,6 +82,6 @@ class ProductController extends Controller
 
     public function variants(Product $product, Variant $variant)
     {
-        return view('admin.products.variants', compact('product'));
+        return view('admin.products.variants', compact('product', 'variant'));
     }
 }

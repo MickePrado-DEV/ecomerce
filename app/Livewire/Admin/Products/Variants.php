@@ -14,8 +14,11 @@ use Livewire\Component;
 class Variants extends Component
 {
     public bool $openModal = false;
+
     public int $productId;
+
     public Product $product;
+
     public Collection $options;
 
     public array $optionForm = [
@@ -31,6 +34,7 @@ class Variants extends Component
 
     public function mount(Product $productModel): void
     {
+        $this->product = $productModel;
         $this->productId = $productModel->id;
         $this->options = Option::orderBy('name')->get();
     }
@@ -42,35 +46,56 @@ class Variants extends Component
     {
         $product = Product::findOrFail($this->productId);
 
-        // 1. Obtener todas las variantes existentes para limpiar imágenes si aplica
+        // Limpieza de variantes previas antes del cálculo matricial
         $existingVariants = Variant::where('product_id', $this->productId)->get();
-        foreach ($existingVariants as $variant) {
-            if ($variant->image_path) {
-                Storage::disk('public')->delete($variant->image_path);
+        foreach ($existingVariants as $v) {
+            if ($v->image_path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($v->image_path);
             }
-            $variant->features()->detach();
-            $variant->delete();
+            $v->features()->detach();
+            $v->delete();
         }
 
-        // 2. Obtener las características de las opciones asignadas al producto
         $features = $product->options->pluck('pivot.features');
 
         if ($features->isEmpty()) {
             return;
         }
 
-        // 3. Generar las combinaciones usando la función recursiva
+        // Procesamiento recursivo seguro
         $combinations = $this->generateCombinations($features->toArray());
 
-        // 4. Crear las nuevas variantes mapeadas
         foreach ($combinations as $combination) {
+            // Ignorar combinaciones vacías o corruptas
+            $cleanCombination = array_filter($combination);
+            if (empty($cleanCombination)) continue;
+
             $variant = Variant::create([
                 'product_id' => $this->productId,
+                'sku' => 'SKU-' . $this->productId . '-' . strtoupper(bin2hex(random_bytes(3))),
             ]);
 
-            // Asumiendo una tabla pivote entre Variant y Feature
-            $variant->features()->attach($combination);
+            $variant->features()->attach($cleanCombination);
         }
+    }
+
+    private function buildVariantSku(string $productSku, Collection $features): string
+    {
+        $suffix = $features
+            ->map(fn(Feature $feature) => strtoupper(substr(preg_replace('/\s+/', '-', $feature->value), 0, 12)))
+            ->implode('-');
+
+        $sku = "{$productSku}-{$suffix}";
+
+        $base = $sku;
+        $counter = 1;
+
+        while (Variant::where('sku', $sku)->exists()) {
+            $sku = "{$base}-{$counter}";
+            $counter++;
+        }
+
+        return $sku;
     }
 
     private function generateCombinations(array $arrayData, int $index = 0, array $combination = []): array
@@ -142,7 +167,6 @@ class Variants extends Component
     {
         unset($this->optionForm['features'][$index]);
         $this->optionForm['features'] = array_values($this->optionForm['features']);
-        $this->generateVariants();
     }
 
     public function saveOption(): void
