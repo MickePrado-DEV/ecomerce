@@ -139,7 +139,8 @@
                                 </span>
                             @endforeach
                         </p>
-                        <a href="" class="ml-auto btn btn-blue">
+                        <a href="{{ route('admin.products.variants', [$product, $itemVariant]) }}"
+                            class="ml-auto btn btn-blue">
                             editar
                         </a>
                     </li>
