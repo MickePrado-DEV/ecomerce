@@ -105,6 +105,54 @@ class Variants extends Component
         }
     }
 
+    public function detachOption(int $optionId): void
+    {
+        Product::findOrFail($this->productId)->options()->detach($optionId);
+
+        unset($this->attachedOptions);
+
+        $this->dispatch('swal', [
+            'icon' => 'success',
+            'title' => '¡Eliminada!',
+            'text' => 'La opción se desvinculó del producto correctamente.',
+        ]);
+    }
+
+    public function removePivotFeature(int $optionId, int $featureIndex): void
+    {
+        $product = Product::findOrFail($this->productId);
+        $option = $product->options()->where('options.id', $optionId)->first();
+
+        if (! $option) {
+            return;
+        }
+
+        $features = $option->pivot->features;
+
+        if (count($features) <= 1) {
+            $this->dispatch('swal', [
+                'icon' => 'error',
+                'title' => 'Acción inválida',
+                'text' => 'La opción debe tener al menos un valor.',
+            ]);
+
+            return;
+        }
+
+        unset($features[$featureIndex]);
+        $features = array_values($features);
+
+        $product->options()->updateExistingPivot($optionId, ['features' => $features]);
+
+        unset($this->attachedOptions);
+
+        $this->dispatch('swal', [
+            'icon' => 'success',
+            'title' => '¡Eliminado!',
+            'text' => 'El valor se eliminó correctamente.',
+        ]);
+    }
+
     private function resetVariantForm(): void
     {
         $this->variant = [

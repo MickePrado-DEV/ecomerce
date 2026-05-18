@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Options;
 use App\Livewire\Forms\Admin\options\NewOptionForm;
 use App\Models\Feature;
 use App\Models\Option;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -21,10 +22,11 @@ class ManageOptions extends Component
     {
         $this->loadOptions();
     }
+
     #[On('featureAdded')]
     public function loadOptions(): void
     {
-        $this->options = Option::with('features')->get();
+        $this->options = Option::with('features')->orderBy('name')->get();
     }
 
     public function openCreateModal(): void
@@ -42,40 +44,51 @@ class ManageOptions extends Component
         $this->openModal = true;
     }
 
-
     public function addFeature(): void
     {
         $this->newOption->addFeature();
     }
 
-
     public function removeFeature(int $index): void
     {
         $this->newOption->removeFeature($index);
     }
-    public function deleteFeature(Feature $feature): void
+
+    public function deleteFeature(int $featureId): void
     {
+        $feature = Feature::with('option.features')->findOrFail($featureId);
+
         if ($feature->option->features()->count() <= 1) {
-            $this->dispatch('swal', [
-                'icon' => 'error',
-                'title' => '¡Error!',
-                'text' => 'Una opción debe tener al menos un valor.',
-            ]);
+            $this->dispatchSwal('error', 'Acción inválida', 'No puedes eliminar este valor porque la opción debe tener al menos un valor registrado.');
+
             return;
         }
 
         $feature->delete();
         $this->loadOptions();
 
-        $this->dispatch('swal', [
-            'icon' => 'success',
-            'title' => '¡Eliminado!',
-            'text' => 'El valor se eliminó correctamente.',
-        ]);
+        $this->dispatchSwal('success', '¡Eliminado!', 'El valor se eliminó correctamente.');
     }
 
+    public function deleteOption(int $optionId): void
+    {
+        $option = Option::with('features')->findOrFail($optionId);
 
+        try {
+            $option->features()->delete();
+            $option->delete();
 
+            $this->loadOptions();
+
+            $this->dispatchSwal('success', '¡Eliminada!', "La opción «{$option->name}» se eliminó correctamente.");
+        } catch (QueryException) {
+            $this->dispatchSwal(
+                'error',
+                'No se puede eliminar',
+                'Esta opción está asociada a uno o más productos. Elimínala de los productos antes de borrarla.'
+            );
+        }
+    }
 
     public function save(): void
     {
@@ -85,26 +98,19 @@ class ManageOptions extends Component
         $this->loadOptions();
         $this->openModal = false;
 
-        $this->dispatch('swal', [
-            'icon' => 'success',
-            'title' => '¡Éxito!',
-            'text' => $isEditing
-                ? 'Opción actualizada correctamente.'
-                : 'Opción creada correctamente.',
-        ]);
+        $this->dispatchSwal(
+            'success',
+            '¡Éxito!',
+            $isEditing ? 'Opción actualizada correctamente.' : 'Opción creada correctamente.'
+        );
     }
 
-    public function deleteOption(Option $option): void
+    private function dispatchSwal(string $icon, string $title, string $text): void
     {
-        $option->features()->delete();
-        Option::whereKey($option->getKey())->delete();
-
-        $this->loadOptions();
-
         $this->dispatch('swal', [
-            'icon' => 'success',
-            'title' => '¡Eliminada!',
-            'text' => 'La opción se eliminó correctamente.',
+            'icon' => $icon,
+            'title' => $title,
+            'text' => $text,
         ]);
     }
 
