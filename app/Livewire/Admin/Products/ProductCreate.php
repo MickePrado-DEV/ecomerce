@@ -6,10 +6,10 @@ use App\Models\Category;
 use App\Models\Family;
 use App\Models\Product;
 use App\Models\SubCategory;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
-use Illuminate\Support\Collection;
 use Livewire\WithFileUploads;
 
 class ProductCreate extends Component
@@ -17,11 +17,13 @@ class ProductCreate extends Component
     use WithFileUploads;
 
     public Collection $families;
+
     public $product_id; // Si existe, estamos editando
 
     // Variables de control de jerarquía
-    public $family_id = "";
-    public $category_id = "";
+    public $family_id = '';
+
+    public $category_id = '';
 
     // Para la nueva imagen
     public $image;
@@ -55,13 +57,13 @@ class ProductCreate extends Component
 
     public function updatedFamilyId(): void
     {
-        $this->category_id = "";
-        $this->product['sub_category_id'] = "";
+        $this->category_id = '';
+        $this->product['sub_category_id'] = '';
     }
 
     public function updatedCategoryId(): void
     {
-        $this->product['sub_category_id'] = "";
+        $this->product['sub_category_id'] = '';
     }
 
     #[Computed]
@@ -82,7 +84,7 @@ class ProductCreate extends Component
             'family_id' => 'required',
             'category_id' => 'required',
             'product.sub_category_id' => 'required|exists:sub_categories,id',
-            'product.sku' => 'required|unique:products,sku,' . $this->product_id,
+            'product.sku' => 'required|unique:products,sku,'.$this->product_id,
             'product.name' => 'required|max:255',
             'product.description' => 'required',
             'product.price' => 'required|numeric|min:0',
@@ -101,7 +103,7 @@ class ProductCreate extends Component
         }
 
         if ($this->product_id) {
-            Product::find($this->product_id)->update($this->product);
+            Product::findOrFail($this->product_id)->update($this->product);
             $msg = 'Producto actualizado.';
         } else {
             Product::create($this->product);

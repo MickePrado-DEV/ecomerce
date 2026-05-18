@@ -11,77 +11,113 @@ use Livewire\Component;
 
 class Variants extends Component
 {
-    public bool $openModal = true;
-    public Product $product;
+    public bool $openModal = false;
+
+    public int $productId;
+
     public Collection $options;
-    public $variant = [
+
+    public array $variant = [
         'option_id' => '',
         'features' => [
             [
                 'id' => '',
                 'value' => '',
-                'description' => ''
-            ]
-        ]
+                'description' => '',
+            ],
+        ],
     ];
 
-    public function mount(): void
+    public function mount(Product $productModel): void
     {
+        $this->productId = $productModel->id;
         $this->options = Option::all();
     }
 
-    public function updatedVariantOptionId()
+    public function updatedVariantOptionId(): void
     {
-
         $this->variant['features'] = [
             [
                 'id' => '',
                 'value' => '',
-                'description' => ''
-            ]
+                'description' => '',
+            ],
         ];
     }
 
-    #[Computed()]
-    public function features()
+    #[Computed]
+    public function features(): Collection
     {
+        if (empty($this->variant['option_id'])) {
+            return collect();
+        }
 
         return Feature::where('option_id', $this->variant['option_id'])->get();
     }
 
-    public function addFeature()
+    #[Computed]
+    public function attachedOptions(): Collection
     {
+        return Product::with('options')->find($this->productId)?->options ?? collect();
+    }
 
+    public function addFeature(): void
+    {
         $this->variant['features'][] = [
             'id' => '',
             'value' => '',
-            'description' => ''
+            'description' => '',
         ];
     }
-    public function removeFeature(int $index)
+
+    public function removeFeature(int $index): void
     {
         unset($this->variant['features'][$index]);
         $this->variant['features'] = array_values($this->variant['features']);
     }
-    public function save()
-    {
 
-        $this->product->options()->attach(
+    public function save(): void
+    {
+        $this->validate([
+            'variant.option_id' => 'required|exists:options,id',
+            'variant.features' => 'required|array|min:1',
+            'variant.features.*.id' => 'required|exists:features,id',
+        ]);
+
+        Product::findOrFail($this->productId)->options()->attach(
             $this->variant['option_id'],
-            [
-                'features' => $this->variant['features']
-            ]
+            ['features' => $this->variant['features']]
         );
+
+        unset($this->attachedOptions);
+
+        $this->resetVariantForm();
+        $this->openModal = false;
     }
-    public function featureChange(int $index)
+
+    public function featureChange(int $index): void
     {
         $feature = Feature::find($this->variant['features'][$index]['id']);
+
         if ($feature) {
             $this->variant['features'][$index]['value'] = $feature->value;
             $this->variant['features'][$index]['description'] = $feature->description;
         }
     }
 
+    private function resetVariantForm(): void
+    {
+        $this->variant = [
+            'option_id' => '',
+            'features' => [
+                [
+                    'id' => '',
+                    'value' => '',
+                    'description' => '',
+                ],
+            ],
+        ];
+    }
 
     public function render()
     {

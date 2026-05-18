@@ -130,8 +130,8 @@
                 <div class="space-y-6">
                     @foreach ($newOption->features as $index => $feature)
                         {{-- IMPORTANTE: wire:key único para cada iteración --}}
-                        <div class="p-5 rounded-lg border border-gray-600 relative bg-[#1f2937]/50"
-                            wire:key="feature-form-{{ $index }}">
+                        <div class="p-5 rounded-lg border border-gray-600  bg-[#1f2937]/50 relative"
+                            wire:key="feature-option-{{ $index }}">
 
                             <div class="absolute -top-3 left-4 px-2 bg-[#1f2937]">
                                 <button type="button" wire:click="removeFeature({{ $index }})"

@@ -4,9 +4,9 @@
 @endphp
 
 <div class="mb-12">
-
-
     @livewire('admin.products.product-create', ['productModel' => $productModel], key('product-create-' . $productKey))
 </div>
 
-@livewire('admin.products.variants', ['product' => $productModel], key('variants-' . $productKey))
+@if ($productModel)
+    @livewire('admin.products.variants', ['productModel' => $productModel], key('variants-' . $productKey))
+@endif
