@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
 
-            $table->foreignId('family_id')->constrained(); // Relación con la tabla families
+            $table->foreignId('family_id')->constrained()->onDelete('cascade'); // Relación con la tabla families
             $table->timestamps();
         });
     }

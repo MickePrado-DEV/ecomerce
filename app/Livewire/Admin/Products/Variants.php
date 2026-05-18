@@ -5,19 +5,20 @@ namespace App\Livewire\Admin\Products;
 use App\Models\Feature;
 use App\Models\Option;
 use App\Models\Product;
+use App\Models\Variant;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 class Variants extends Component
 {
     public bool $openModal = false;
-
     public int $productId;
-
+    public Product $product;
     public Collection $options;
 
-    public array $variant = [
+    public array $optionForm = [
         'option_id' => '',
         'features' => [
             [
@@ -31,12 +32,71 @@ class Variants extends Component
     public function mount(Product $productModel): void
     {
         $this->productId = $productModel->id;
-        $this->options = Option::all();
+        $this->options = Option::orderBy('name')->get();
     }
 
-    public function updatedVariantOptionId(): void
+    /**
+     * Genera automáticamente todas las combinaciones posibles de variantes
+     */
+    public function generateVariants(): void
     {
-        $this->variant['features'] = [
+        $product = Product::findOrFail($this->productId);
+
+        // 1. Obtener todas las variantes existentes para limpiar imágenes si aplica
+        $existingVariants = Variant::where('product_id', $this->productId)->get();
+        foreach ($existingVariants as $variant) {
+            if ($variant->image_path) {
+                Storage::disk('public')->delete($variant->image_path);
+            }
+            $variant->features()->detach();
+            $variant->delete();
+        }
+
+        // 2. Obtener las características de las opciones asignadas al producto
+        $features = $product->options->pluck('pivot.features');
+
+        if ($features->isEmpty()) {
+            return;
+        }
+
+        // 3. Generar las combinaciones usando la función recursiva
+        $combinations = $this->generateCombinations($features->toArray());
+
+        // 4. Crear las nuevas variantes mapeadas
+        foreach ($combinations as $combination) {
+            $variant = Variant::create([
+                'product_id' => $this->productId,
+            ]);
+
+            // Asumiendo una tabla pivote entre Variant y Feature
+            $variant->features()->attach($combination);
+        }
+    }
+
+    private function generateCombinations(array $arrayData, int $index = 0, array $combination = []): array
+    {
+        if ($index == count($arrayData)) {
+            return [$combination];
+        }
+
+        $result = [];
+
+        foreach ($arrayData[$index] as $item) {
+            $tempCombination = $combination;
+            $tempCombination[] = $item['id'];
+
+            $result = array_merge(
+                $result,
+                $this->generateCombinations($arrayData, $index + 1, $tempCombination)
+            );
+        }
+
+        return $result;
+    }
+
+    public function updatedOptionFormOptionId(): void
+    {
+        $this->optionForm['features'] = [
             [
                 'id' => '',
                 'value' => '',
@@ -46,13 +106,13 @@ class Variants extends Component
     }
 
     #[Computed]
-    public function features(): Collection
+    public function optionFormFeatures(): Collection
     {
-        if (empty($this->variant['option_id'])) {
+        if (empty($this->optionForm['option_id'])) {
             return collect();
         }
 
-        return Feature::where('option_id', $this->variant['option_id'])->get();
+        return Feature::where('option_id', $this->optionForm['option_id'])->get();
     }
 
     #[Computed]
@@ -61,61 +121,90 @@ class Variants extends Component
         return Product::with('options')->find($this->productId)?->options ?? collect();
     }
 
-    public function addFeature(): void
+    #[Computed]
+    public function productVariants(): Collection
     {
-        $this->variant['features'][] = [
+        return Product::with(['variants.features.option'])
+            ->find($this->productId)
+            ?->variants ?? collect();
+    }
+
+    public function addOptionFormFeature(): void
+    {
+        $this->optionForm['features'][] = [
             'id' => '',
             'value' => '',
             'description' => '',
         ];
     }
 
-    public function removeFeature(int $index): void
+    public function removeOptionFormFeature(int $index): void
     {
-        unset($this->variant['features'][$index]);
-        $this->variant['features'] = array_values($this->variant['features']);
+        unset($this->optionForm['features'][$index]);
+        $this->optionForm['features'] = array_values($this->optionForm['features']);
+        $this->generateVariants();
     }
 
-    public function save(): void
+    public function saveOption(): void
     {
         $this->validate([
-            'variant.option_id' => 'required|exists:options,id',
-            'variant.features' => 'required|array|min:1',
-            'variant.features.*.id' => 'required|exists:features,id',
+            'optionForm.option_id' => 'required|exists:options,id',
+            'optionForm.features' => 'required|array|min:1',
+            'optionForm.features.*.id' => 'required|exists:features,id',
         ]);
 
         Product::findOrFail($this->productId)->options()->attach(
-            $this->variant['option_id'],
-            ['features' => $this->variant['features']]
+            $this->optionForm['option_id'],
+            ['features' => $this->optionForm['features']]
         );
 
-        unset($this->attachedOptions);
+        unset($this->attachedOptions, $this->productVariants);
 
-        $this->resetVariantForm();
+        $this->resetOptionForm();
         $this->openModal = false;
+
+        // Regenerar variantes automáticamente tras añadir opción
+        $this->generateVariants();
+
+        $this->dispatchSwal('success', '¡Éxito!', 'Opción agregada y variantes generadas correctamente.');
     }
 
-    public function featureChange(int $index): void
+    public function optionFormFeatureChange(int $index): void
     {
-        $feature = Feature::find($this->variant['features'][$index]['id']);
+        $feature = Feature::find($this->optionForm['features'][$index]['id']);
 
         if ($feature) {
-            $this->variant['features'][$index]['value'] = $feature->value;
-            $this->variant['features'][$index]['description'] = $feature->description;
+            $this->optionForm['features'][$index]['value'] = $feature->value;
+            $this->optionForm['features'][$index]['description'] = $feature->description;
         }
+    }
+
+    public function deleteVariant(int $variantId): void
+    {
+        $variant = Variant::where('product_id', $this->productId)->findOrFail($variantId);
+
+        if ($variant->image_path) {
+            Storage::disk('public')->delete($variant->image_path);
+        }
+
+        $variant->features()->detach();
+        $variant->delete();
+
+        unset($this->productVariants);
+
+        $this->dispatchSwal('success', '¡Eliminada!', 'La variante se eliminó correctamente.');
     }
 
     public function detachOption(int $optionId): void
     {
         Product::findOrFail($this->productId)->options()->detach($optionId);
 
-        unset($this->attachedOptions);
+        unset($this->attachedOptions, $this->productVariants);
 
-        $this->dispatch('swal', [
-            'icon' => 'success',
-            'title' => '¡Eliminada!',
-            'text' => 'La opción se desvinculó del producto correctamente.',
-        ]);
+        // Regenerar variantes tras quitar la opción del producto
+        $this->generateVariants();
+
+        $this->dispatchSwal('success', '¡Eliminada!', 'La opción se desvinculó del producto correctamente.');
     }
 
     public function removePivotFeature(int $optionId, int $featureIndex): void
@@ -130,11 +219,7 @@ class Variants extends Component
         $features = $option->pivot->features;
 
         if (count($features) <= 1) {
-            $this->dispatch('swal', [
-                'icon' => 'error',
-                'title' => 'Acción inválida',
-                'text' => 'La opción debe tener al menos un valor.',
-            ]);
+            $this->dispatchSwal('error', 'Acción inválida', 'La opción debe tener al menos un valor.');
 
             return;
         }
@@ -144,18 +229,17 @@ class Variants extends Component
 
         $product->options()->updateExistingPivot($optionId, ['features' => $features]);
 
-        unset($this->attachedOptions);
+        unset($this->attachedOptions, $this->productVariants);
 
-        $this->dispatch('swal', [
-            'icon' => 'success',
-            'title' => '¡Eliminado!',
-            'text' => 'El valor se eliminó correctamente.',
-        ]);
+        // Regenerar variantes tras remover un atributo específico
+        $this->generateVariants();
+
+        $this->dispatchSwal('success', '¡Eliminado!', 'El valor se eliminó correctamente.');
     }
 
-    private function resetVariantForm(): void
+    private function resetOptionForm(): void
     {
-        $this->variant = [
+        $this->optionForm = [
             'option_id' => '',
             'features' => [
                 [
@@ -165,6 +249,15 @@ class Variants extends Component
                 ],
             ],
         ];
+    }
+
+    private function dispatchSwal(string $icon, string $title, string $text): void
+    {
+        $this->dispatch('swal', [
+            'icon' => $icon,
+            'title' => $title,
+            'text' => $text,
+        ]);
     }
 
     public function render()

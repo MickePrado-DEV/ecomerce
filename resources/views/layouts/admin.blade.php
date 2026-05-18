@@ -118,6 +118,15 @@
             });
         };
 
+        window.confirmProductDeleteVariant = function(componentId, variantId, sku) {
+            return window.callLivewireAfterConfirm(componentId, 'deleteVariant', [variantId], {
+                title: '¿Eliminar variante?',
+                html: `Se eliminará la variante <strong>${sku}</strong> de forma permanente.`,
+                icon: 'warning',
+                confirmButtonText: 'Sí, eliminar',
+            });
+        };
+
         window.confirmProductRemovePivotFeature = function(componentId, optionId, featureIndex, totalFeatures) {
             if (totalFeatures <= 1) {
                 return Swal.fire({

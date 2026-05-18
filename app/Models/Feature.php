@@ -24,8 +24,6 @@ class Feature extends Model
     // relacion muchos a muchos variantes
     public function variants()
     {
-        return $this->belongsToMany(Variant::class)
-
-            ->withTimestamps();
+        return $this->belongsToMany(Variant::class)->withTimestamps();
     }
 }

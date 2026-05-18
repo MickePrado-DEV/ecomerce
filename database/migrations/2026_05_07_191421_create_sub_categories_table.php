@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
 
-            $table->foreignId('category_id')->constrained(); // Relación con la tabla categories
+            $table->foreignId('category_id')->constrained()->onDelete('cascade');; // Relación con la tabla categories
             $table->timestamps();
         });
     }
