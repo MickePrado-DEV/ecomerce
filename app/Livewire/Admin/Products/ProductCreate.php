@@ -9,6 +9,7 @@ use App\Models\SubCategory;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -18,15 +19,15 @@ class ProductCreate extends Component
 
     public Collection $families;
 
-    public $product_id; // Si existe, estamos editando
+    public ?int $product_id = null;
 
-    // Variables de control de jerarquía
-    public $family_id = '';
+    public string $family_id = '';
 
-    public $category_id = '';
+    public string $category_id = '';
 
-    // Para la nueva imagen
-    public $image;
+    public $image = null;
+
+    public bool $hideProductStock = false;
 
     public array $product = [
         'sku' => '',
@@ -35,6 +36,7 @@ class ProductCreate extends Component
         'price' => '',
         'sub_category_id' => '',
         'image_path' => '',
+        'stock' => 0,
     ];
 
     public function mount(?Product $productModel = null): void
@@ -42,17 +44,42 @@ class ProductCreate extends Component
         $this->families = Family::all();
 
         if ($productModel && $productModel->exists) {
-            $this->product_id = $productModel->id;
-            $this->product = $productModel->toArray();
+            $this->product_id = (int) $productModel->id;
 
-            // Lógica para pre-cargar los select de jerarquía
-            $subCategory = SubCategory::with('category.family')->find($this->product['sub_category_id']);
+            $this->product = [
+                'sku' => (string) $productModel->sku,
+                'name' => (string) $productModel->name,
+                'description' => (string) $productModel->description,
+                'price' => $productModel->price,
+                'sub_category_id' => (string) $productModel->sub_category_id,
+                'image_path' => (string) ($productModel->image_path ?? ''),
+                'stock' => (int) ($productModel->stock ?? 0),
+            ];
+
+            $subCategory = SubCategory::with('category.family')->find($productModel->sub_category_id);
 
             if ($subCategory) {
-                $this->category_id = $subCategory->category_id;
-                $this->family_id = $subCategory->category->family_id;
+                $this->category_id = (string) $subCategory->category_id;
+                $this->family_id = (string) $subCategory->category->family_id;
             }
+
+            $this->refreshProductStockVisibility();
+        } else {
+            $this->product['stock'] = 0;
         }
+    }
+
+    #[On('product-stock-visibility-changed')]
+    public function refreshProductStockVisibility(): void
+    {
+        if (! $this->product_id) {
+            return;
+        }
+
+        $product = Product::withCount(['variants', 'options'])->find($this->product_id);
+
+        $this->hideProductStock = $product
+            && ($product->variants_count > 0 || $product->options_count > 0);
     }
 
     public function updatedFamilyId(): void
@@ -69,44 +96,79 @@ class ProductCreate extends Component
     #[Computed]
     public function categories(): Collection
     {
+        if (empty($this->family_id)) {
+            return collect();
+        }
+
         return Category::where('family_id', $this->family_id)->get();
     }
 
     #[Computed]
     public function subcategories(): Collection
     {
+        if (empty($this->category_id)) {
+            return collect();
+        }
+
         return SubCategory::where('category_id', $this->category_id)->get();
     }
 
-    public function save()
+    #[Computed]
+    public function showStockField(): bool
+    {
+        return $this->product_id !== null && ! $this->hideProductStock;
+    }
+
+    private function rulesForSave(): array
     {
         $rules = [
             'family_id' => 'required',
             'category_id' => 'required',
             'product.sub_category_id' => 'required|exists:sub_categories,id',
-            'product.sku' => 'required|unique:products,sku,'.$this->product_id,
+            'product.sku' => 'required|unique:products,sku,'.($this->product_id ?? 'NULL').',id',
             'product.name' => 'required|max:255',
             'product.description' => 'required',
             'product.price' => 'required|numeric|min:0',
             'image' => 'nullable|image|max:2048',
         ];
 
-        $this->validate($rules);
+        if ($this->product_id && ! $this->hideProductStock) {
+            $rules['product.stock'] = 'required|integer|min:0';
+        }
 
-        // Manejo de la imagen
+        return $rules;
+    }
+
+    public function save()
+    {
+        $this->validate($this->rulesForSave());
+
+        $payload = $this->product;
+
+        if ($this->product_id) {
+            if (! $this->hideProductStock) {
+                $payload['stock'] = (int) ($this->product['stock'] ?? 0);
+            } else {
+                unset($payload['stock']);
+            }
+        } else {
+            unset($payload['stock']);
+        }
+
         if ($this->image) {
-            // Si estamos editando y ya había una imagen, borrar la anterior
-            if ($this->product_id && $this->product['image_path']) {
+            if ($this->product_id && ! empty($this->product['image_path'])) {
                 Storage::disk('public')->delete($this->product['image_path']);
             }
-            $this->product['image_path'] = $this->image->store('products', 'public');
+
+            $payload['image_path'] = $this->image->store('products', 'public');
         }
 
         if ($this->product_id) {
-            Product::findOrFail($this->product_id)->update($this->product);
+            Product::findOrFail($this->product_id)->update($payload);
             $msg = 'Producto actualizado.';
         } else {
-            Product::create($this->product);
+            $created = Product::create(array_merge($payload, ['stock' => 0]));
+            $this->product_id = (int) $created->id;
             $msg = 'Producto creado.';
         }
 

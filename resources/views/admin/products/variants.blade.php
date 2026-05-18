@@ -12,12 +12,8 @@
         'route' => route('admin.products.edit', $product),
     ],
     [
-        'name' => $variant->features->pluck('description')->implode(' | '),
+        'name' => 'Editar variante',
     ],
 ]">
-
-    <figure>
-        <img class="aspect[16/9] w-full object-cover object-center rounded-lg" src="{{ $variant->image }}" alt="">
-    </figure>
-
+    @livewire('admin.products.variant-edit', ['product' => $product, 'variant' => $variant], key('variant-edit-' . $variant->id))
 </x-admin-layout>

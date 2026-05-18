@@ -4,12 +4,12 @@
         'route' => route('admin.dashboard'),
     ],
     [
-        'name' => 'Categorías',
-        'route' => route('admin.categories.index'),
+        'name' => 'Productos',
+        'route' => route('admin.products.index'),
     ],
     [
-        'name' => 'Crear Categoría',
+        'name' => $product->name,
     ],
 ]">
-    @include('admin.products.form._form')
+    @include('admin.products.form._form', ['product' => $product])
 </x-admin-layout>

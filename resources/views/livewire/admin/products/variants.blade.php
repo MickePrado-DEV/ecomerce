@@ -113,9 +113,28 @@
         {{-- COLUMNA DERECHA: Listado de variantes generadas --}}
         <section class="rounded-lg bg-[#1f2937] shadow-lg overflow-hidden border border-gray-700">
             <header class="bg-[#111827] px-6 py-4 border-b border-gray-700">
-                <div>
-                    <h2 class="text-lg font-bold text-white">Variantes del Producto</h2>
-                    <p class="text-xs text-gray-400 mt-0.5">Listado de combinaciones generadas de forma dinámica</p>
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h2 class="text-lg font-bold text-white">Variantes del producto</h2>
+                        <p class="text-xs text-gray-400 mt-0.5">
+                            Un valor por opción = una variante (ej. 4 colores → 4 variantes).
+                            @if ($this->attachedOptions->isNotEmpty())
+                                Esperadas:
+                                <span class="text-gray-300 font-medium">{{ $this->expectedVariantCount }}</span>
+                            @endif
+                        </p>
+                    </div>
+                    @if ($this->attachedOptions->isNotEmpty())
+                        <x-button wire:click="generateVariants" wire:loading.attr="disabled"
+                            wire:target="generateVariants"
+                            class="bg-emerald-600 hover:bg-emerald-700 text-white border-none shrink-0">
+                            <span wire:loading.remove wire:target="generateVariants">
+                                <i class="fa-solid fa-arrows-rotate mr-2"></i>
+                                Generar variantes
+                            </span>
+                            <span wire:loading wire:target="generateVariants">Generando...</span>
+                        </x-button>
+                    @endif
                 </div>
             </header>
 
@@ -126,20 +145,16 @@
                             <article wire:key="product-variant-{{ $itemVariant->id }}"
                                 class="flex flex-col sm:flex-row sm:items-center gap-4 rounded-lg border border-gray-600 bg-[#242b3d] p-4">
 
-                                @if ($itemVariant->image_path)
-                                    <img src="{{ Storage::url($itemVariant->image_path) }}"
-                                        alt="{{ $itemVariant->sku }}"
-                                        class="h-16 w-16 shrink-0 rounded-lg object-cover border border-gray-600">
-                                @else
-                                    <div
-                                        class="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-gray-800 border border-gray-600">
-                                        <i class="fa-solid fa-image text-gray-500"></i>
-                                    </div>
-                                @endif
+                                <img src="{{ $itemVariant->image }}" alt="{{ $itemVariant->sku }}"
+                                    class="h-16 w-16 shrink-0 rounded-lg object-cover border border-gray-600 bg-gray-800">
 
                                 <div class="flex-1 min-w-0">
                                     <p class="text-sm font-bold text-white font-mono">
-                                        {{ $itemVariant->sku ?? 'VARIACIÓN #' . $itemVariant->id }}</p>
+                                        {{ $itemVariant->sku ?? 'VARIACIÓN #' . $itemVariant->id }}
+                                    </p>
+                                    <p class="text-xs text-gray-500 mt-0.5">
+                                        Stock: <span class="text-gray-300 font-medium">{{ $itemVariant->stock }}</span>
+                                    </p>
                                     <div class="flex flex-wrap gap-2 mt-2">
                                         @foreach ($itemVariant->features as $feature)
                                             <span
@@ -155,12 +170,15 @@
                                     </div>
                                 </div>
 
-                                <a href="{{ route('admin.products.variants', [$product, $itemVariant]) }}"
-                                    wire:navigate
-                                    class="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
-                                    title="Editar variante">
-                                    <i class="fa-solid fa-pen-to-square"></i>
-                                </a>
+                                <div class="flex shrink-0 gap-1">
+                                    <a href="{{ route('admin.products.variants', [$this->product, $itemVariant]) }}"
+                                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-400
+                                               hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+                                        title="Editar variante">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </a>
+
+                                </div>
                             </article>
                         @endforeach
                     </div>
@@ -171,8 +189,22 @@
                             <i class="fa-solid fa-layer-group text-lg text-gray-500"></i>
                         </div>
                         <p class="text-sm font-medium text-gray-300">Sin variantes generadas</p>
-                        <p class="text-xs text-gray-500 mt-1 max-w-sm">Las variantes combinatorias se calcularán
-                            automáticamente tras guardar opciones.</p>
+                        <p class="text-xs text-gray-500 mt-1 max-w-sm">
+                            @if ($this->attachedOptions->isNotEmpty())
+                                Tienes opciones configuradas. Pulsa el botón para crear
+                                {{ $this->expectedVariantCount }} variantes.
+                            @else
+                                Agrega una opción (ej. Color) con sus valores; se crearán las variantes al guardar.
+                            @endif
+                        </p>
+                        @if ($this->attachedOptions->isNotEmpty())
+                            <x-button wire:click="generateVariants" wire:loading.attr="disabled"
+                                wire:target="generateVariants"
+                                class="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white border-none">
+                                <i class="fa-solid fa-arrows-rotate mr-2"></i>
+                                Generar {{ $this->expectedVariantCount }} variantes
+                            </x-button>
+                        @endif
                     </div>
                 @endif
             </div>
